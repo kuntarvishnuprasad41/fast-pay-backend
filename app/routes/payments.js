@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 pr.use(bodyParser.json());
 pr.use(cors())
 
-pr.get("/payments", (req, res) => {
+pr.get("/", (req, res) => {
   res.status(200).send("Hello");
 });
 
-pr.get("/", async (req, res) => {
+pr.get("/payments", async (req, res) => {
   try {
     const payments = await prisma.payments.findMany();
     res.status(200).json(payments);
@@ -20,7 +20,7 @@ pr.get("/", async (req, res) => {
   }
 });
 
-pr.post("/", async (req, res) => {
+pr.post("/payments", async (req, res) => {
   try {
     const { accountNumber, amount, bankName, ifscCode, upiId, userName } =
       req.body;
