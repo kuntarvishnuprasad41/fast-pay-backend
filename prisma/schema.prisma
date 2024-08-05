@@ -21,4 +21,5 @@ model Payments {
   ifscCode      String
   bankName      String
   upiId         String
+  fileUrl       String?  // New field added here
 }

@@ -1,8 +1,12 @@
 const express = require("express");
 const routes = require("express").Router();
+const formidable = require('formidable')
 
 const app = express();
 const cors = require('cors');
+
+app.use(express.static(path.join(__dirname, "uploads")));
+
 
 const paymentRoutes = require("./routes/payments");
 
