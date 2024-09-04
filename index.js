@@ -52,6 +52,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+})
+
 // User Registration (Admin creates users)
 app.post('/register', async (req, res) => {
     const { username, password, role, merchantId } = req.body;
