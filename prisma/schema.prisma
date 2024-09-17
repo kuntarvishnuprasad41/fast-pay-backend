@@ -16,8 +16,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Merchant   Merchant? @relation(fields: [merchantId], references: [id])
-  merchantId String?
+  merchantId String? // Foreign key field (optional)
+  merchant   Merchant? @relation(name: "MerchantUsers", fields: [merchantId], references: [id])
+
+  // Add the relation name to match the one in the Merchant model
 }
 
 model Merchant {
@@ -36,7 +38,9 @@ model Merchant {
   merchantTransactions MerchantTransaction[]
   payouts              Payout[]
   supportTickets       SupportTicket[]
-  User                 User[]
+
+  users User[] @relation(name: "MerchantUsers")
+  // This field now correctly references the relation
 }
 
 model BankDetail {
