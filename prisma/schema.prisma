@@ -1,99 +1,168 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Payment {
-  id         Int           @id @default(autoincrement())
-  amount     Float
-  status     PaymentStatus
-  merchant   Merchant      @relation(fields: [merchantId], references: [id])
-  merchantId Int
-  utrNumber  String?
-  screenShot String?
-  proof      PaymentProof?
-  createdAt  DateTime      @default(now())
+generator client {
+  provider = "prisma-client-js"
 }
 
-model PaymentProof {
-  id         Int     @id @default(autoincrement())
-  screenshot String // URL or file path of the screenshot
-  utrNumber  String
-  payment    Payment @relation(fields: [paymentId], references: [id])
-  paymentId  Int     @unique
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Merchant   Merchant? @relation(fields: [merchantId], references: [id])
+  merchantId String?
 }
 
 model Merchant {
-  id            Int          @id @default(autoincrement())
+  id            String         @id @default(uuid())
+  name          String
+  contactNumber String
+  email         String         @unique
+  gstNumber     String?
+  creditLimit   Float
+  debitLimit    Float
+  status        MerchantStatus
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  bankDetails          BankDetail[]
+  merchantTransactions MerchantTransaction[]
+  payouts              Payout[]
+  supportTickets       SupportTicket[]
+  User                 User[]
+}
+
+model BankDetail {
+  id            String   @id @default(uuid())
+  merchant      Merchant @relation(fields: [merchantId], references: [id])
+  merchantId    String
   accountHolder String
   accountNumber String
   ifscCode      String
   bankName      String
+  upiId         String?
+  qrCodeUrl     String?
+  minLimit      Float
+  maxLimit      Float
+  turnover      Float
   creditLimit   Float
   debitLimit    Float
-  upiId         String
+  mode          Mode
+  method        Method
   level         String
-  qrCode        String // Store QR code data
-  users         User[]       @relation(name: "UserToMerchant")
-  payments      Payment[]
-  settlements   Settlement[]
-  createdAt     DateTime     @default(now())
-  Payout        Payout[]
+  status        Status
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BankTransaction {
+  id          String   @id @default(uuid())
+  date        DateTime
+  txnId       String   @unique
+  amount      Float
+  utr         String   @unique
+  isGetPay    Boolean
+  method      String
+  account     String
+  mode        String
+  description String
+  txnDate     DateTime
+  crDr        CrDr
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  merchantTransactions MerchantTransaction[]
+}
+
+model MerchantTransaction {
+  id                String            @id @default(uuid())
+  merchant          Merchant          @relation(fields: [merchantId], references: [id])
+  merchantId        String
+  bankTransaction   BankTransaction?  @relation(fields: [bankTransactionId], references: [id])
+  bankTransactionId String?
+  utr               String
+  status            TransactionStatus
+  amount            Float
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model Payout {
-  id            Int      @id @default(autoincrement())
-  merchant      Merchant @relation(fields: [merchantId], references: [id])
-  merchantId    Int
-  payoutAmount  Float // The amount paid to the merchant
-  payoutDate    DateTime @default(now())
-  initiatedBy   User     @relation(fields: [initiatedById], references: [id]) // The admin who initiated the payout
-  initiatedById Int
-  payinsTotal   Float // Total of the merchant's pay-ins that the payout is based on
-  createdAt     DateTime @default(now())
+  id         String       @id @default(uuid())
+  merchant   Merchant     @relation(fields: [merchantId], references: [id])
+  merchantId String
+  amount     Float
+  status     PayoutStatus
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
-model User {
-  id         Int       @id @default(autoincrement())
-  username   String    @unique
-  password   String
-  role       Role
-  merchant   Merchant? @relation(fields: [merchantId], references: [id], name: "UserToMerchant")
-  merchantId Int?
-  createdAt  DateTime  @default(now())
-  Payout     Payout[]
-}
-
-model Settlement {
-  id            Int      @id @default(autoincrement())
-  merchant      Merchant @relation(fields: [merchantId], references: [id])
-  merchantId    Int
-  settledAmount Float
-  percentage    Float?
-  createdAt     DateTime @default(now())
+model SupportTicket {
+  id          String        @id @default(uuid())
+  merchant    Merchant      @relation(fields: [merchantId], references: [id])
+  merchantId  String
+  subject     String
+  description String
+  status      SupportStatus
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 enum Role {
-  SuperAdmin
-  Admin
-  Verification
-  Merchant
-  MerchantUser
+  ADMIN
+  DATA_ENTRY
+  SUPPORT
+  MERCHANT
 }
 
-enum PaymentStatus {
-  Initiated
-  Pending
-  Verified
-  Error
+enum MerchantStatus {
+  ACTIVE
+  FROZEN
+}
+
+enum Mode {
+  MANUAL
+  AUTO
+}
+
+enum Method {
+  UPI
+  BANK_TRANSFER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum TransactionStatus {
+  SUCCESS
+  FAILED
+  REJECTED
+  PENDING
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PAID
+  FAILED
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum CrDr {
+  CR
+  DR
 }
